@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Practica 3 - Capturas</title>
+<style>
+@page { size: A4 landscape; margin: 10mm; }
+* { box-sizing: border-box; }
+body { margin: 0; font-family: Arial, sans-serif; background: #fff; color: #111; }
+.section { height: 187mm; page-break-after: always; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.section:last-child { page-break-after: auto; }
+h1 { font-size: 22px; margin: 0 0 8px; }
+p { font-size: 12px; margin: 0 0 8px; color: #444; }
+img { max-width: 100%; max-height: 168mm; object-fit: contain; border: 1px solid #bbb; }
+</style>
+</head>
+<body>
+<section class="section"><h1>Admin: Categorias</h1><p>Categorias creadas en el administrador de Django</p><img src="01_admin_categorias.png" alt="Categorias en admin"></section>
+<section class="section"><h1>Admin: Productos</h1><p>Productos con su categoria asignada</p><img src="02_admin_productos.png" alt="Productos en admin"></section>
+<section class="section"><h1>API: Categorias</h1><p>/api/categories/</p><img src="03_api_categorias.png" alt="API de categorias"></section>
+<section class="section"><h1>API: Productos</h1><p>/api/products/ - nombre de categoria visible</p><img src="04_api_productos.png" alt="API de productos"></section>
+<section class="section"><h1>API: Filtro por categoria</h1><p>/api/products/?category=1</p><img src="05_api_filtro_categoria_1.png" alt="API filtrada por categoria"></section>
+</body>
+</html>

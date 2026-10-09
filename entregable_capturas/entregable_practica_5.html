@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Practica 5 - Pruebas unitarias</title>
+<style>
+@page { size: A4; margin: 18mm 20mm; }
+* { box-sizing: border-box; }
+body { margin: 0; background: #fff; color: #202124; font-family: Calibri, "Segoe UI", Arial, sans-serif; }
+.page { width: 170mm; min-height: 261mm; margin: 0 auto; padding: 0; background: #fff; page-break-after: always; }
+.page:last-child { page-break-after: auto; }
+h1 { margin: 0 0 7px; color: #1f4e79; font-size: 27px; font-weight: 700; }
+h2 { margin: 0 0 12px; color: #1f4e79; font-size: 21px; font-weight: 700; }
+h3 { margin: 18px 0 7px; font-size: 16px; }
+.subtitle { margin: 0 0 20px; color: #666; font-size: 13px; }
+.explanation { padding: 12px 14px; border-left: 4px solid #5b9bd5; background: #f2f2f2; line-height: 1.5; font-size: 14px; }
+.code-title { position: relative; margin-top: 20px; padding: 9px 14px 9px 42px; border: 1px solid #3e3e42; border-bottom: 0; background: #252526; color: #d4d4d4; font: 12px Consolas, "Courier New", monospace; }
+.code-title::before { content: "●  ●  ●"; position: absolute; left: 12px; color: #858585; letter-spacing: 2px; }
+pre { margin: 0; padding: 12px 14px 12px 52px; overflow: hidden; border: 1px solid #3e3e42; background: #1e1e1e; color: #d4d4d4; font: 12px/1.55 Consolas, "Courier New", monospace; white-space: pre-wrap; counter-reset: line; }
+.code-line { display: block; min-height: 1.55em; counter-increment: line; }
+.code-line::before { content: counter(line); display: inline-block; width: 28px; margin-left: -38px; margin-right: 10px; color: #858585; text-align: right; user-select: none; }
+.result { margin-top: 16px; padding: 11px 14px; border: 1px solid #a9d18e; background: #e2f0d9; color: #375623; font-weight: 700; }
+.cover { display: flex; flex-direction: column; justify-content: center; }
+.cover h1 { font-size: 36px; }
+.cover .line { width: 74px; height: 4px; margin: 15px 0 22px; background: #1f4e79; }
+.cover p { max-width: 135mm; font-size: 17px; line-height: 1.55; color: #666; }
+.info { margin-top: 30px; padding: 15px; border: 1px solid #bfbfbf; background: #f2f2f2; font-size: 14px; line-height: 1.6; }
+.small { color: #666; font-size: 12px; }
+@media print { body { background: #fff; } .page { margin: 0; } }
+</style>
+</head>
+<body>
+<section class="page cover">
+  <h1>Práctica 5</h1>
+  <h2>Pruebas unitarias en Django</h2>
+  <div class="line"></div>
+  <p>Pruebas de la API para verificar la creación, consulta, actualización y eliminación de categorías y productos.</p>
+  <div class="info">
+    <strong>Archivo probado:</strong> <code>products/tests.py</code><br>
+    <strong>Autenticación:</strong> cada prueba usa un usuario de prueba con <code>force_authenticate</code> porque los endpoints requieren JWT.<br>
+    <strong>Resultado:</strong> 6 pruebas ejecutadas correctamente.
+  </div>
+</section>
+
+<section class="page">
+  <h1>Prueba 1</h1>
+  <h2>Crear una categoría</h2>
+  <div class="explanation">Envía una petición POST al endpoint de categorías con el nombre “Ropa”. Comprueba que la API responda con código 201, que existan dos categorías y que la nueva categoría se haya guardado.</div>
+  <div class="code-title">Fragmento de products/tests.py</div>
+  <pre>def test_create_category(self):
+    response = self.client.post('/api/categories/', {'name': 'Ropa'})
+
+    self.assertEqual(response.status_code, 201)
+    self.assertEqual(Category.objects.count(), 2)
+    self.assertTrue(Category.objects.filter(name='Ropa').exists())</pre>
+  <div class="result">Qué valida: creación correcta y persistencia de la categoría.</div>
+</section>
+
+<section class="page">
+  <h1>Prueba 2</h1>
+  <h2>Listar categorías</h2>
+  <div class="explanation">Solicita la lista de categorías mediante GET. Comprueba que la respuesta sea exitosa, que contenga una categoría y que incluya “Electronica”.</div>
+  <div class="code-title">Fragmento de products/tests.py</div>
+  <pre>def test_list_categories(self):
+    response = self.client.get('/api/categories/')
+
+    self.assertEqual(response.status_code, 200)
+    self.assertEqual(len(response.data), 1)
+    self.assertEqual(response.data[0]['name'], 'Electronica')</pre>
+  <div class="result">Qué valida: consulta de categorías y contenido de la respuesta.</div>
+</section>
+
+<section class="page">
+  <h1>Prueba 3</h1>
+  <h2>Crear un producto</h2>
+  <div class="explanation">Envía los datos obligatorios de un producto mediante POST. Comprueba que la API responda con código 201, que aumente el total de productos y que el producto “Mouse” exista.</div>
+  <div class="code-title">Fragmento de products/tests.py</div>
+  <pre>def test_create_product(self):
+    response = self.client.post('/api/products/', {
+        'name': 'Mouse',
+        'description': 'Mouse inalambrico',
+        'price': 500.00,
+    })
+
+    self.assertEqual(response.status_code, 201)
+    self.assertEqual(Product.objects.count(), 2)
+    self.assertTrue(Product.objects.filter(name='Mouse').exists())</pre>
+  <div class="result">Qué valida: creación del producto y guardado en la base de datos.</div>
+</section>
+
+<section class="page">
+  <h1>Prueba 4</h1>
+  <h2>Listar productos</h2>
+  <div class="explanation">Realiza una petición GET al endpoint de productos. Comprueba que la respuesta sea exitosa, que devuelva un producto y que el nombre recibido sea “Laptop”.</div>
+  <div class="code-title">Fragmento de products/tests.py</div>
+  <pre>def test_list_products(self):
+    response = self.client.get('/api/products/')
+
+    self.assertEqual(response.status_code, 200)
+    self.assertEqual(len(response.data), 1)
+    self.assertEqual(response.data[0]['name'], 'Laptop')</pre>
+  <div class="result">Qué valida: listado de productos y datos principales de la respuesta.</div>
+</section>
+
+<section class="page">
+  <h1>Prueba 5</h1>
+  <h2>Actualizar un producto</h2>
+  <div class="explanation">Actualiza el producto existente usando PUT. Comprueba que la API responda con código 200 y que el nombre y el precio nuevos queden guardados.</div>
+  <div class="code-title">Fragmento de products/tests.py</div>
+  <pre>def test_update_product(self):
+    response = self.client.put(
+        f'/api/products/{self.product.id}/',
+        {
+            'name': 'Laptop Pro',
+            'description': 'Laptop HP actualizada',
+            'price': 18000.00,
+        },
+    )
+
+    self.assertEqual(response.status_code, 200)
+    self.product.refresh_from_db()
+    self.assertEqual(self.product.name, 'Laptop Pro')
+    self.assertEqual(self.product.price, 18000.00)</pre>
+  <div class="result">Qué valida: actualización de datos y persistencia después de recargar el registro.</div>
+</section>
+
+<section class="page">
+  <h1>Prueba 6</h1>
+  <h2>Eliminar un producto</h2>
+  <div class="explanation">Elimina el producto mediante DELETE. Comprueba que la API responda con código 204 y que el registro ya no exista en la base de datos.</div>
+  <div class="code-title">Fragmento de products/tests.py</div>
+  <pre>def test_delete_product(self):
+    response = self.client.delete(
+        f'/api/products/{self.product.id}/',
+    )
+
+    self.assertEqual(response.status_code, 204)
+    self.assertFalse(Product.objects.filter(id=self.product.id).exists())</pre>
+  <div class="result">Qué valida: eliminación correcta y ausencia del producto eliminado.</div>
+</section>
+
+<section class="page">
+  <h1>Resultado de la ejecución</h1>
+  <h2>python manage.py test</h2>
+  <div class="code-title">Salida obtenida en la terminal</div>
+  <pre>Found 6 test(s).
+Creating test database for alias 'default'...
+System check identified some issues:
+
+......
+----------------------------------------------------------------------
+Ran 6 tests in 2.198s
+
+OK
+Destroying test database for alias 'default'...</pre>
+  <div class="result">Las seis pruebas unitarias fueron ejecutadas correctamente.</div>
+  <p class="small">Nota: Django mostró advertencias informativas sobre DEFAULT_AUTO_FIELD, pero no hubo fallos en las pruebas.</p>
+</section>
+<script>
+document.querySelectorAll('pre').forEach(function (block) {
+  const lines = block.textContent.replace(/\n$/, '').split('\n');
+  block.textContent = '';
+  lines.forEach(function (line) {
+    const row = document.createElement('span');
+    row.className = 'code-line';
+    row.textContent = line || ' ';
+    block.appendChild(row);
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Resultado de Aprendizaje - Arquitectura y patrones</title>
+<style>
+@page { size: A4; margin: 14mm; }
+* { box-sizing: border-box; }
+body { margin: 0; color: #182230; font-family: "Segoe UI", Arial, sans-serif; background: #fff; }
+.page { min-height: 269mm; page-break-after: always; padding: 4mm 1mm; }
+.page:last-child { page-break-after: auto; }
+h1 { margin: 0 0 8px; color: #123b5d; font-size: 29px; }
+h2 { margin: 0 0 12px; color: #176b73; font-size: 22px; }
+h3 { margin: 18px 0 7px; color: #123b5d; font-size: 16px; }
+p, li { font-size: 13px; line-height: 1.45; }
+.lead { color: #52606d; font-size: 16px; line-height: 1.55; }
+.tag { display: inline-block; padding: 5px 9px; background: #e4f2f0; color: #176b73; font-weight: 700; font-size: 12px; }
+.diagram { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 30px 0; }
+.node { width: 31mm; min-height: 25mm; padding: 13px 6px; border: 2px solid #176b73; background: #edf8f6; text-align: center; font-weight: 700; font-size: 13px; }
+.arrow { color: #d36b35; font-size: 25px; font-weight: 700; }
+.note { padding: 12px 14px; border-left: 4px solid #d36b35; background: #fff3e9; }
+.code-title { position: relative; margin-top: 13px; padding: 9px 14px 9px 54px; border: 1px solid #30363d; border-bottom: 0; background: #252526; color: #cccccc; font: 12px Consolas, monospace; }
+.code-title::before { content: "●  ●  ●"; position: absolute; left: 14px; top: 8px; color: #f14c4c; letter-spacing: 1px; }
+.code-title::after { content: "  Python"; margin-left: 10px; color: #6a9955; }
+pre { margin: 0; padding: 12px 14px 12px 54px; overflow: hidden; border: 1px solid #30363d; background: #1e1e1e; color: #d4d4d4; font: 10.5px/1.5 Consolas, monospace; white-space: pre-wrap; counter-reset: line; }
+.code-line { display: block; min-height: 1.5em; counter-increment: line; }
+.code-line::before { content: counter(line); display: inline-block; width: 28px; margin-left: -42px; margin-right: 14px; color: #858585; text-align: right; user-select: none; }
+.token-keyword { color: #569cd6; }
+.token-string { color: #ce9178; }
+.token-number { color: #b5cea8; }
+.token-comment { color: #6a9955; }
+.terminal-title { background: #0e639c; }
+.terminal-title::after { content: "  PowerShell"; color: #d4d4d4; }
+.result { padding: 10px 12px; border: 1px solid #9cc9a7; background: #edf8ef; color: #245b32; font-weight: 700; }
+table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 12px; }
+th { background: #123b5d; color: #fff; text-align: left; }
+th, td { padding: 9px; border: 1px solid #b8c5cc; vertical-align: top; line-height: 1.4; }
+td:first-child { width: 18%; font-weight: 700; color: #123b5d; }
+td:nth-child(2) { width: 19%; }
+.footer { margin-top: 20px; color: #697782; font-size: 11px; }
+</style>
+</head>
+<body>
+<section class="page">
+  <span class="tag">Django REST Framework</span>
+  <h1>Arquitectura en capas y patrones de diseño</h1>
+  <p class="lead">Resultado de Aprendizaje de la Unidad 1. Implementación en el proyecto de tienda online.</p>
+  <h2>1. Modelo de arquitectura</h2>
+  <p>El proyecto sigue una arquitectura en capas basada en el patrón MVC-MVT de Django. La URL recibe la petición, la vista coordina el caso de uso, la capa de servicios concentra las decisiones de negocio y el modelo representa los datos persistidos.</p>
+  <div class="diagram">
+    <div class="node">urls.py<br><small>Enrutamiento</small></div><div class="arrow">→</div>
+    <div class="node">views.py<br><small>Endpoint</small></div><div class="arrow">→</div>
+    <div class="node">services.py<br><small>Reglas</small></div><div class="arrow">→</div>
+    <div class="node">models.py<br><small>Datos</small></div>
+  </div>
+  <div class="note"><strong>Flujo implementado:</strong> <code>/api/products/&lt;id&gt;/precio-final/</code> llega a <code>precio_final</code>, obtiene una estrategia según la categoría y calcula el precio usando el producto persistido.</div>
+  <p class="footer">Proyecto: tienda_online | Aplicación: products</p>
+</section>
+<section class="page">
+  <h1>2. Patrón Strategy</h1><h2>Capa de servicios</h2>
+  <p>La estrategia se selecciona por nombre de categoría. Cada clase encapsula una forma distinta de calcular el descuento y permite cambiar la regla sin modificar el endpoint.</p>
+  <div class="code-title">products/services.py</div>
+  <pre>class EstrategiaDescuento:
+    def calcular(self, precio):
+        raise NotImplementedError
+
+class DescuentoElectronica(EstrategiaDescuento):
+    def calcular(self, precio):
+        return precio * 0.90
+
+class DescuentoRopa(EstrategiaDescuento):
+    def calcular(self, precio):
+        return precio * 0.80
+
+class SinDescuento(EstrategiaDescuento):
+    def calcular(self, precio):
+        return precio
+
+def obtener_estrategia(categoria_nombre):
+    estrategias = {
+        'Electronica': DescuentoElectronica(),
+        'Ropa': DescuentoRopa(),
+    }
+    return estrategias.get(categoria_nombre, SinDescuento())</pre>
+  <div class="result">Estrategias probadas: Electronica = 10% de descuento; Ropa = 20% de descuento.</div>
+</section>
+<section class="page">
+  <h1>3. Factory Method</h1><h2>Creación con categoría por defecto</h2>
+  <p>El método de clase centraliza la creación de un producto sin categoría explícita. Obtiene o crea la categoría <strong>Sin categoría</strong> y devuelve el objeto listo para usarse.</p>
+  <div class="code-title">products/models.py</div>
+  <pre>@classmethod
+def crear_con_categoria_default(cls, name, description, price):
+    categoria_default, _ = Category.objects.get_or_create(
+        name='Sin categoría'
+    )
+    return cls.objects.create(
+        name=name,
+        description=description,
+        price=price,
+        category=categoria_default,
+    )</pre>
+  <div class="note"><strong>Por qué es creacional:</strong> el método encapsula el proceso de instanciación de <code>Product</code> y garantiza una configuración inicial válida.</div>
+</section>
+<section class="page">
+  <h1>4. Facade</h1><h2>Endpoint protegido</h2>
+  <p>El endpoint ofrece una única llamada sencilla al cliente y oculta la búsqueda del producto, la selección de estrategia y el cálculo del descuento.</p>
+  <div class="code-title">products/views.py y products/urls.py</div>
+  <pre>@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def precio_final(request, pk):
+    producto = get_object_or_404(Product, pk=pk)
+    categoria_nombre = producto.category.name if producto.category else None
+    estrategia = obtener_estrategia(categoria_nombre)
+    precio_con_descuento = estrategia.calcular(float(producto.price))
+    return Response({
+        'producto': producto.name,
+        'precio_original': producto.price,
+        'precio_final': round(precio_con_descuento, 2),
+    })
+
+path('products/&lt;int:pk&gt;/precio-final/', precio_final, name='precio-final')</pre>
+  <h3>Resultados del endpoint autenticado</h3>
+  <div class="code-title">GET /api/products/1/precio-final/</div>
+  <pre>{"producto": "Laptop", "precio_original": "15000.00", "precio_final": 13500.0}</pre>
+  <div class="code-title">GET /api/products/2/precio-final/</div>
+  <pre>{"producto": "Sudadera", "precio_original": "1000.00", "precio_final": 800.0}</pre>
+</section>
+<section class="page">
+  <h1>5. Pruebas unitarias</h1><h2>Endpoint autenticado y protegido</h2>
+  <div class="code-title">products/tests.py</div>
+  <pre>def test_precio_final_autenticado(self):
+    ...
+    self.assertEqual(response_electronica.status_code, 200)
+    self.assertEqual(response_ropa.status_code, 200)
+    self.assertEqual(response_electronica.data['precio_final'], 13500.0)
+    self.assertEqual(response_ropa.data['precio_final'], 800.0)
+
+def test_precio_final_sin_autenticar(self):
+    self.client.force_authenticate(user=None)
+    response = self.client.get(
+        f'/api/products/{self.product.id}/precio-final/'
+    )
+    self.assertEqual(response.status_code, 401)</pre>
+  <h2>Resultado de la ejecución</h2>
+  <div class="code-title">.\venv\Scripts\python.exe manage.py test products</div>
+  <pre>Found 8 test(s).
+........
+----------------------------------------------------------------------
+Ran 8 tests in 2.877s
+
+OK
+Destroying test database for alias 'default'...</pre>
+  <div class="result">Todas las pruebas de categorías, productos y precio final pasaron correctamente.</div>
+</section>
+<section class="page">
+  <h1>6. Tabla de patrones</h1>
+  <table>
+    <thead><tr><th>Patrón</th><th>Categoría</th><th>Evidencia</th><th>Explicación</th></tr></thead>
+    <tbody>
+      <tr><td>Factory Method</td><td>Creacional</td><td><code>Product.crear_con_categoria_default</code> en <code>models.py</code></td><td>Encapsula la creación de productos y decide cómo asignar la categoría inicial cuando el cliente no la proporciona.</td></tr>
+      <tr><td>Strategy</td><td>Comportamiento</td><td><code>services.py</code>: <code>DescuentoElectronica</code>, <code>DescuentoRopa</code> y <code>SinDescuento</code></td><td>Define algoritmos intercambiables para calcular el precio final. La estrategia concreta se elige según la categoría.</td></tr>
+      <tr><td>Facade</td><td>Estructural</td><td><code>precio_final</code> en <code>views.py</code></td><td>Expone una interfaz única y simple para coordinar acceso al modelo, selección de estrategia y cálculo del precio.</td></tr>
+    </tbody>
+  </table>
+  <p class="footer">Ruta local del proyecto: <code>/api/products/&lt;id&gt;/precio-final/</code> | Autenticación: JWT mediante <code>IsAuthenticated</code></p>
+</section>
+<script>
+document.querySelectorAll('pre').forEach(function (block) {
+  const lines = block.textContent.replace(/\n$/, '').split('\n');
+  block.textContent = '';
+  lines.forEach(function (line) {
+    const row = document.createElement('span');
+    row.className = 'code-line';
+    const pattern = /(#[^\n]*|'[^']*'|"[^"]*"|\b(?:class|def|return|raise|from|import|if|else|None|True|False|GET)\b|\b\d+(?:\.\d+)?\b)/g;
+    let cursor = 0;
+    line.replace(pattern, function (match, token, offset) {
+      row.appendChild(document.createTextNode(line.slice(cursor, offset)));
+      const colored = document.createElement('span');
+      colored.className = token[0] === '#' ? 'token-comment' : token[0] === "'" || token[0] === '"' ? 'token-string' : /^\d/.test(token) ? 'token-number' : 'token-keyword';
+      colored.textContent = token;
+      row.appendChild(colored);
+      cursor = offset + match.length;
+    });
+    row.appendChild(document.createTextNode(line.slice(cursor) || ' '));
+    block.appendChild(row);
+  });
+});
+</script>
+</body>
+</html>

@@ -1,10 +1,11 @@
 from unittest.mock import patch
 
-from django.contrib.auth.models import User
 from django.test import TestCase
 from requests.exceptions import ConnectTimeout
 from rest_framework.test import APIClient
 from zeep.exceptions import Fault
+
+from users.models import User
 
 MEXICO = {
     'sISOCode': 'MX',
@@ -38,7 +39,7 @@ class PaisSoapTestCase(TestCase):
         operation = get_client.return_value.service.FullCountryInfo
         operation.return_value = MEXICO
 
-        response = self.client.get('/api/soap/countries/mx/')
+        response = self.client.get('/api/v1/soap/countries/mx/')
 
         self.assertEqual(response.status_code, 200)
         operation.assert_called_once_with(sCountryISOCode='MX')
@@ -51,7 +52,7 @@ class PaisSoapTestCase(TestCase):
             'Languages': None,
         }
 
-        response = self.client.get('/api/soap/countries/MX/')
+        response = self.client.get('/api/v1/soap/countries/MX/')
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data['pais']['idiomas'], [])
@@ -59,28 +60,28 @@ class PaisSoapTestCase(TestCase):
     def test_unknown_country_returns_404(self, get_client):
         get_client.return_value.service.FullCountryInfo.return_value = NOT_FOUND
 
-        response = self.client.get('/api/soap/countries/ZZ/')
+        response = self.client.get('/api/v1/soap/countries/ZZ/')
 
         self.assertEqual(response.status_code, 404)
 
     def test_soap_fault_returns_502(self, get_client):
         get_client.return_value.service.FullCountryInfo.side_effect = Fault('fallo')
 
-        response = self.client.get('/api/soap/countries/MX/')
+        response = self.client.get('/api/v1/soap/countries/MX/')
 
         self.assertEqual(response.status_code, 502)
 
     def test_network_error_returns_502(self, get_client):
         get_client.side_effect = ConnectTimeout('sin red')
 
-        response = self.client.get('/api/soap/countries/MX/')
+        response = self.client.get('/api/v1/soap/countries/MX/')
 
         self.assertEqual(response.status_code, 502)
 
     def test_requires_authentication(self, get_client):
         self.client.force_authenticate(user=None)
 
-        response = self.client.get('/api/soap/countries/MX/')
+        response = self.client.get('/api/v1/soap/countries/MX/')
 
         self.assertEqual(response.status_code, 401)
         get_client.assert_not_called()

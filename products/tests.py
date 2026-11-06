@@ -1,6 +1,7 @@
-from django.contrib.auth.models import User
 from django.test import TestCase
 from rest_framework.test import APIClient
+
+from users.models import User
 
 from .models import Category, Product
 
@@ -17,7 +18,7 @@ class CategoryTestCase(TestCase):
 
 	# PRUEBA 1: Verifica que se pueda crear una categoria mediante POST.
 	def test_create_category(self):
-		response = self.client.post('/api/categories/', {'name': 'Ropa'})
+		response = self.client.post('/api/v1/categories/', {'name': 'Ropa'})
 
 		self.assertEqual(response.status_code, 201)
 		self.assertEqual(Category.objects.count(), 2)
@@ -25,7 +26,7 @@ class CategoryTestCase(TestCase):
 
 	# PRUEBA 2: Verifica que se puedan listar las categorias existentes.
 	def test_list_categories(self):
-		response = self.client.get('/api/categories/')
+		response = self.client.get('/api/v1/categories/')
 
 		self.assertEqual(response.status_code, 200)
 		self.assertEqual(len(response.data), 1)
@@ -50,7 +51,7 @@ class ProductTestCase(TestCase):
 
 	# PRUEBA 3: Verifica que se pueda crear un producto mediante POST.
 	def test_create_product(self):
-		response = self.client.post('/api/products/', {
+		response = self.client.post('/api/v1/products/', {
 			'name': 'Mouse',
 			'description': 'Mouse inalambrico',
 			'price': 500.00,
@@ -62,7 +63,7 @@ class ProductTestCase(TestCase):
 
 	# PRUEBA 4: Verifica que se puedan listar los productos existentes.
 	def test_list_products(self):
-		response = self.client.get('/api/products/')
+		response = self.client.get('/api/v1/products/')
 
 		self.assertEqual(response.status_code, 200)
 		self.assertEqual(len(response.data), 1)
@@ -71,7 +72,7 @@ class ProductTestCase(TestCase):
 	# PRUEBA 5: Verifica que se pueda actualizar un producto mediante PUT.
 	def test_update_product(self):
 		response = self.client.put(
-			f'/api/products/{self.product.id}/',
+			f'/api/v1/products/{self.product.id}/',
 			{
 				'name': 'Laptop Pro',
 				'description': 'Laptop HP actualizada',
@@ -87,7 +88,7 @@ class ProductTestCase(TestCase):
 	# PRUEBA 6: Verifica que se pueda eliminar un producto mediante DELETE.
 	def test_delete_product(self):
 		response = self.client.delete(
-			f'/api/products/{self.product.id}/',
+			f'/api/v1/products/{self.product.id}/',
 		)
 
 		self.assertEqual(response.status_code, 204)
@@ -102,10 +103,10 @@ class ProductTestCase(TestCase):
 			price=1000.00,
 		)
 		response_electronica = self.client.get(
-			f'/api/products/{self.product.id}/precio-final/'
+			f'/api/v1/products/{self.product.id}/precio-final/'
 		)
 		response_ropa = self.client.get(
-			f'/api/products/{producto_ropa.id}/precio-final/'
+			f'/api/v1/products/{producto_ropa.id}/precio-final/'
 		)
 
 		self.assertEqual(response_electronica.status_code, 200)
@@ -116,7 +117,7 @@ class ProductTestCase(TestCase):
 	def test_precio_final_sin_autenticar(self):
 		self.client.force_authenticate(user=None)
 		response = self.client.get(
-			f'/api/products/{self.product.id}/precio-final/'
+			f'/api/v1/products/{self.product.id}/precio-final/'
 		)
 
 		self.assertEqual(response.status_code, 401)

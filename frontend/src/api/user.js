@@ -9,21 +9,21 @@ async function request(path, params) {
 }
 
 export async function loginApi(formData) {
-  const response = await request("/api/token/", {
+  const response = await request("/api/v1/auth/token/", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(formData),
   });
 
   if (response.status !== 200) {
-    throw new Error("Usuario o contraseña incorrecta");
+    throw new Error("Correo o contraseña incorrecta");
   }
 
   return response.json();
 }
 
 export async function registerApi(formData) {
-  const response = await request("/api/auth/register/", {
+  const response = await request("/api/v1/auth/register/", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(formData),
@@ -39,7 +39,7 @@ export async function registerApi(formData) {
 }
 
 export async function getMeApi(token) {
-  const response = await request("/api/auth/me/", {
+  const response = await request("/api/v1/auth/me/", {
     headers: { Authorization: `Bearer ${token}` },
   });
 

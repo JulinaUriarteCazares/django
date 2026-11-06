@@ -32,15 +32,15 @@ export function Login() {
         <h1>Login</h1>
 
         <Form className="login-form-admin" onSubmit={formik.handleSubmit}>
-          <label>Usuario</label>
+          <label>Correo electrónico</label>
           <Form.Input
-            name="username"
-            placeholder="Usuario"
-            autoComplete="username"
-            value={formik.values.username}
+            name="email"
+            placeholder="Correo electrónico"
+            autoComplete="email"
+            value={formik.values.email}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
-            error={formik.touched.username && formik.errors.username}
+            error={formik.touched.email && formik.errors.email}
           />
 
           <label>Contraseña</label>
@@ -74,14 +74,16 @@ export function Login() {
 
 function initialValues() {
   return {
-    username: "",
+    email: "",
     password: "",
   };
 }
 
 function validationSchema() {
   return Yup.object({
-    username: Yup.string().required("El usuario es obligatorio"),
+    email: Yup.string()
+      .email("Correo electrónico no válido")
+      .required("El correo electrónico es obligatorio"),
     password: Yup.string().required("La contraseña es obligatoria"),
   });
 }

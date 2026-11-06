@@ -1,13 +1,14 @@
 # Tienda Online: Django + React
 
-Backend en Django REST Framework con autenticación JWT y frontend en React (Vite).
-Incluye el consumo de una API de terceros (Open-Meteo) y de un Web Service SOAP (zeep).
+API de una tienda en línea con Django REST Framework, usuarios personalizados, login con JWT y
+documentación en Swagger. Incluye un frontend en React (Vite), el consumo de una API de terceros
+(Open-Meteo) y de un Web Service SOAP (zeep).
 
 ## Tecnologías
 
 | Parte | Tecnologías |
 | --- | --- |
-| Backend | Python 3.14, Django 5.2, Django REST Framework, SimpleJWT, django-cors-headers, zeep, MySQL |
+| Backend | Python 3.14, Django 5.2, Django REST Framework, SimpleJWT, drf-yasg, django-cors-headers, zeep, MySQL |
 | Frontend | Node 24, React 18, Vite 8, React Router 6, Semantic UI React, Formik, Yup, Sass, React Toastify |
 
 ## Estructura
@@ -18,7 +19,7 @@ Incluye el consumo de una API de terceros (Open-Meteo) y de un Web Service SOAP 
 ├── requirements.txt
 ├── tienda_online/     Configuración del proyecto Django
 ├── products/          Productos y categorías (API protegida con JWT)
-├── users/             Registro y datos del usuario autenticado
+├── users/             Modelo de usuario, CRUD, registro, login y datos personales
 ├── countries/         Consumo del servicio SOAP de países
 └── frontend/          Aplicación de React
     └── src/
@@ -44,7 +45,7 @@ Incluye el consumo de una API de terceros (Open-Meteo) y de un Web Service SOAP 
 Crea la base de datos en MySQL:
 
 ```sql
-CREATE DATABASE hackathon CHARACTER SET utf8mb4;
+CREATE DATABASE tienda_online CHARACTER SET utf8mb4;
 ```
 
 Si tu usuario o contraseña de MySQL son distintos, ajústalos en `DATABASES` dentro de
@@ -79,35 +80,48 @@ npm run dev
 El frontend queda en `http://localhost:5173`. El backend solo acepta peticiones de ese origen
 (`CORS_ALLOWED_ORIGINS` en `settings.py`), así que no cambies el puerto.
 
-## Uso
+## Documentación de la API
 
-1. Abre `http://localhost:5173` y entra a **Registrarme**.
-2. Crea una cuenta. La contraseña necesita 8 caracteres, una mayúscula, un número y un carácter especial.
-3. Inicia sesión con tu **usuario** y contraseña. Se abrirá el Dashboard.
+- Swagger: `http://localhost:8000/swagger/`
+- ReDoc: `http://localhost:8000/redoc/`
 
-El login usa el nombre de usuario, no el correo, porque el proyecto conserva el modelo `User` de Django.
+Para probar un endpoint protegido en Swagger:
+
+1. Ejecuta `POST /auth/token/` con tu correo y contraseña, y copia el valor de `access`.
+2. Abre **Authorize** y escribe `Bearer TU_TOKEN`.
+
+## Usuarios
+
+- El login usa el **correo** y la contraseña.
+- El modelo `users.User` agrega el campo `telefono`, visible en el admin, en la API y en Swagger.
+- El token de acceso dura 1 hora (`ACCESS_TOKEN_LIFETIME` en `settings.py`).
+- La API nunca devuelve la contraseña. Al editar un usuario, la contraseña solo cambia si se envía.
 
 ## Endpoints
 
+Todas las rutas empiezan con `/api/v1`.
+
 | Método | Ruta | Acceso | Descripción |
 | --- | --- | --- | --- |
-| POST | `/api/token/` | Público | Inicia sesión y devuelve el JWT |
-| POST | `/api/token/refresh/` | Público | Renueva el token de acceso |
-| POST | `/api/auth/register/` | Público | Registra un usuario |
-| GET | `/api/auth/me/` | JWT | Datos del usuario autenticado |
-| GET | `/api/soap/countries/<iso>/` | JWT | Datos de un país por SOAP, por ejemplo `MX` |
-| GET, POST | `/api/products/` | JWT | Lista y crea productos |
-| GET, PUT, PATCH, DELETE | `/api/products/<id>/` | JWT | Consulta, edita y elimina un producto |
-| GET | `/api/products/<id>/precio-final/` | JWT | Precio con descuento según la categoría |
-| GET, POST | `/api/categories/` | JWT | Lista y crea categorías |
-| GET, PUT, PATCH, DELETE | `/api/categories/<id>/` | JWT | Consulta, edita y elimina una categoría |
+| POST | `/auth/token/` | Público | Inicia sesión y devuelve el JWT |
+| POST | `/auth/token/refresh/` | Público | Renueva el token de acceso |
+| POST | `/auth/register/` | Público | Registra un usuario |
+| GET | `/auth/me/` | JWT | Datos personales del usuario autenticado |
+| GET, POST | `/users/` | Administrador | Lista y crea usuarios |
+| GET, PUT, PATCH, DELETE | `/users/<id>/` | Administrador | Consulta, edita y elimina un usuario |
+| GET | `/soap/countries/<iso>/` | JWT | Datos de un país por SOAP, por ejemplo `MX` |
+| GET, POST | `/products/` | JWT | Lista y crea productos |
+| GET, PUT, PATCH, DELETE | `/products/<id>/` | JWT | Consulta, edita y elimina un producto |
+| GET | `/products/<id>/precio-final/` | JWT | Precio con descuento según la categoría |
+| GET, POST | `/categories/` | JWT | Lista y crea categorías |
+| GET, PUT, PATCH, DELETE | `/categories/<id>/` | JWT | Consulta, edita y elimina una categoría |
 
-Ejemplo del endpoint SOAP en PowerShell:
+Ejemplo en PowerShell:
 
 ```powershell
-$credenciales = @{ username = 'TU_USUARIO'; password = 'TU_CONTRASENA' } | ConvertTo-Json
-$token = (Invoke-RestMethod -Method Post -Uri http://localhost:8000/api/token/ -ContentType 'application/json' -Body $credenciales).access
-Invoke-RestMethod -Uri http://localhost:8000/api/soap/countries/MX/ -Headers @{ Authorization = "Bearer $token" }
+$credenciales = @{ email = 'TU_CORREO'; password = 'TU_CONTRASENA' } | ConvertTo-Json
+$token = (Invoke-RestMethod -Method Post -Uri http://localhost:8000/api/v1/auth/token/ -ContentType 'application/json' -Body $credenciales).access
+Invoke-RestMethod -Uri http://localhost:8000/api/v1/auth/me/ -Headers @{ Authorization = "Bearer $token" }
 ```
 
 ## Servicios externos
@@ -127,7 +141,7 @@ Las pruebas crean una base de datos temporal, por lo que el usuario de MySQL nec
 
 ## Notas
 
-- `Login.jsx` escribe el token en la consola porque el entregable pide esa evidencia.
+- `Login.jsx` escribe el token en la consola porque un entregable pedía esa evidencia.
   Hay que quitar esa línea antes de usar el proyecto en producción.
 - `npm audit` reporta 2 avisos moderados de React Router 6, y la corrección requiere pasar a la versión 7.
   Se conserva la 6 porque la pide la actividad. Los avisos no afectan a este proyecto: los enlaces son

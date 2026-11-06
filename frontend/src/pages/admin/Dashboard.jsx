@@ -21,7 +21,7 @@ export function Dashboard() {
       <div className="dashboard__grid">
         <section className="card">
           <h2>Mi cuenta</h2>
-          <p className="card__source">Web service propio: /api/auth/me/</p>
+          <p className="card__source">Web service propio: /api/v1/auth/me/</p>
           <dl className="user-data">
             <div>
               <dt>ID</dt>

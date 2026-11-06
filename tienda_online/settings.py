@@ -45,6 +45,7 @@ THIRD_APPS = [
     'rest_framework_simplejwt',
     'django_filters',
     'corsheaders',
+    'drf_yasg',
 ]
 
 OWN_APPS = [
@@ -64,6 +65,18 @@ REST_FRAMEWORK = {
 # Con el valor por defecto (5 minutos) la sesión del frontend caducaría casi de inmediato.
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),
+}
+
+# Botón Authorize de Swagger: se escribe "Bearer <token>".
+SWAGGER_SETTINGS = {
+    'USE_SESSION_AUTH': False,
+    'SECURITY_DEFINITIONS': {
+        'Bearer': {
+            'type': 'apiKey',
+            'name': 'Authorization',
+            'in': 'header',
+        },
+    },
 }
 
 # Frontend de React (servidor de desarrollo de Vite).
@@ -109,7 +122,7 @@ WSGI_APPLICATION = 'tienda_online.wsgi.application'
 DATABASES = {
     'default': {
     'ENGINE': 'django.db.backends.mysql',
-    'NAME': 'hackathon',
+    'NAME': 'tienda_online',
     'USER': 'root',
     'PASSWORD': '1234',
     'HOST': 'localhost',
@@ -163,3 +176,7 @@ MAILERS = {
         'BACKEND': 'django.core.mail.backends.console.EmailBackend',
     },
 }
+
+
+# Usuarios
+AUTH_USER_MODEL = 'users.User'

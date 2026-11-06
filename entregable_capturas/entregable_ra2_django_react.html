@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>RA2: Django + React con autenticación y APIs</title>
+<style>
+@page { size: Letter; margin: 17mm 17mm 18mm; }
+* { box-sizing: border-box; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { margin: 0; color: #1f2933; font: 10.5pt/1.5 "Segoe UI", Arial, sans-serif; background: #fff; }
+h1 { margin: 0 0 4px; color: #123b5d; font-size: 21pt; line-height: 1.15; }
+h2 { margin: 24px 0 8px; padding-bottom: 4px; border-bottom: 2px solid #176b73; color: #123b5d; font-size: 15pt; line-height: 1.25; break-after: avoid; }
+h3 { margin: 16px 0 5px; color: #176b73; font-size: 11.5pt; break-after: avoid; }
+p { margin: 0 0 8px; }
+ul { margin: 0 0 8px; padding-left: 20px; }
+li { margin-bottom: 3px; }
+a { color: #0b6bcb; }
+code { padding: 0 3px; background: #eef2f5; font: 9pt Consolas, monospace; }
+.subtitle { margin-bottom: 14px; color: #52606d; font-size: 11.5pt; }
+.repo { margin: 12px 0 14px; padding: 10px 12px; border: 1px solid #b7d7d3; background: #eef8f6; }
+.repo strong { display: block; color: #123b5d; }
+.repo a { font-size: 11pt; font-weight: 600; }
+pre { margin: 6px 0 10px; padding: 9px 11px; border: 1px solid #d5dde3; background: #f6f8fa; font: 8.6pt/1.45 Consolas, monospace; white-space: pre-wrap; break-inside: avoid; }
+.file { margin: 8px 0 -6px; color: #52606d; font: 600 8.6pt Consolas, monospace; break-after: avoid; }
+table { width: 100%; margin: 8px 0 12px; border-collapse: collapse; font-size: 9.3pt; line-height: 1.38; }
+th { padding: 6px 7px; border: 1px solid #123b5d; background: #123b5d; color: #fff; text-align: left; }
+td { padding: 5px 7px; border: 1px solid #c8d3da; vertical-align: top; }
+tr { break-inside: avoid; }
+td.nowrap { white-space: nowrap; }
+figure { margin: 10px 0 12px; break-inside: avoid; }
+figure img { display: block; width: 100%; border: 1px solid #c8d3da; }
+figure.small { width: 56%; margin-left: auto; margin-right: auto; }
+figure.medium { width: 80%; margin-left: auto; margin-right: auto; }
+figure.tiny { width: 42%; margin-left: auto; margin-right: auto; }
+figcaption { margin-top: 4px; color: #52606d; font-size: 9pt; line-height: 1.35; }
+figcaption b { color: #1f2933; }
+.required { display: inline-block; margin-right: 5px; padding: 0 6px; background: #d9480f; color: #fff; font-size: 8pt; font-weight: 700; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; break-inside: avoid; }
+.pair figure { margin: 8px 0 10px; }
+.diagram { margin: 6px 0 4px; break-inside: avoid; }
+.diagram svg { display: block; width: 100%; height: auto; }
+</style>
+</head>
+<body>
+
+<h1>RA2: Django + React con autenticación y APIs</h1>
+<div class="subtitle">Cierre de las Unidades 2 y 3 · Proyecto Tienda Online · 6 de noviembre de 2026</div>
+
+<p>Se tomó el backend de la Práctica 4 (Django + JWT) y se le creó un frontend en React siguiendo el manual. También se integró una API de terceros en el Dashboard y se creó un endpoint que consume un Web Service SOAP. Este documento explica lo que se hizo en cada parte y cómo quedó. Las capturas son del proyecto funcionando en la computadora de desarrollo.</p>
+
+<div class="repo">
+  <strong>Repositorio en GitHub (frontend, backend y README.md con la instalación)</strong>
+  <a href="https://github.com/JulinaUriarteCazares/django/tree/ra2-django-react">https://github.com/JulinaUriarteCazares/django/tree/ra2-django-react</a>
+</div>
+
+<h3>Resumen de requisitos</h3>
+<table>
+  <thead><tr><th>Parte</th><th>Requisito</th><th>Cómo quedó</th><th>Figuras</th></tr></thead>
+  <tr><td>1</td><td>Crear el proyecto</td><td>React con Vite y sus dependencias instaladas</td><td class="nowrap">2 a 5</td></tr>
+  <tr><td>1</td><td>Configurar rutas</td><td>React Router 6 con layouts de admin, cliente y común</td><td class="nowrap">4 y 6</td></tr>
+  <tr><td>1</td><td>Página de login</td><td>Conectada a <code>/api/token/</code>; guarda el token y redirige al Dashboard</td><td class="nowrap">10 a 12</td></tr>
+  <tr><td>1</td><td>AuthContext</td><td>Hook <code>useAuth</code>; la sesión sigue activa al recargar</td><td class="nowrap">13 a 15</td></tr>
+  <tr><td>1</td><td>Página de registro</td><td>Formulario validado y endpoint <code>/api/auth/register/</code></td><td class="nowrap">7 a 9</td></tr>
+  <tr><td>2</td><td>API de terceros</td><td>Widget de clima en el Dashboard con Open-Meteo y <code>fetch</code></td><td class="nowrap">14 y 16</td></tr>
+  <tr><td>3</td><td>Web service propio</td><td><code>/api/auth/me/</code> responde 401 sin token y 200 con token</td><td class="nowrap">17</td></tr>
+  <tr><td>3</td><td>Consumo SOAP</td><td><code>/api/soap/countries/&lt;iso&gt;/</code> consume el servicio con zeep</td><td class="nowrap">18 y 19</td></tr>
+</table>
+<p>Las capturas que pide la actividad llevan la marca <span class="required">Captura solicitada</span> en su pie de figura.</p>
+
+<h3>Arquitectura</h3>
+<div class="diagram">
+<svg viewBox="0 0 680 212" role="img" aria-label="El frontend React llama al backend Django y a Open-Meteo; Django usa MySQL y el servicio SOAP">
+  <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#176b73"/></marker></defs>
+  <g font-family="Segoe UI, Arial, sans-serif" text-anchor="middle">
+    <g fill="#edf8f6" stroke="#176b73" stroke-width="1.5">
+      <rect x="20" y="62" width="170" height="60" rx="6"/>
+      <rect x="270" y="62" width="170" height="60" rx="6"/>
+      <rect x="520" y="8" width="150" height="56" rx="6"/>
+      <rect x="520" y="120" width="150" height="56" rx="6"/>
+      <rect x="20" y="156" width="170" height="50" rx="6"/>
+    </g>
+    <g fill="#123b5d" font-size="13" font-weight="700">
+      <text x="105" y="88">Frontend React</text>
+      <text x="355" y="88">Backend Django</text>
+      <text x="595" y="32">MySQL</text>
+      <text x="595" y="144">Servicio SOAP</text>
+      <text x="105" y="177">Open-Meteo</text>
+    </g>
+    <g fill="#52606d" font-size="10.5">
+      <text x="105" y="106">localhost:5173</text>
+      <text x="355" y="106">localhost:8000</text>
+      <text x="595" y="50">usuarios y productos</text>
+      <text x="595" y="162">CountryInfoService</text>
+      <text x="105" y="195">API pública de clima</text>
+    </g>
+    <g stroke="#176b73" stroke-width="1.5" fill="none" marker-end="url(#a)">
+      <path d="M190 92 H268"/>
+      <path d="M440 80 L518 44"/>
+      <path d="M440 104 L518 140"/>
+      <path d="M105 122 V154"/>
+    </g>
+    <g fill="#d9480f" font-size="10.5" font-weight="600">
+      <text x="229" y="84">JWT + JSON</text>
+      <text x="466" y="52">ORM</text>
+      <text x="466" y="136">zeep</text>
+      <text x="130" y="143">fetch</text>
+    </g>
+  </g>
+</svg>
+</div>
+
+<h2>1. Preparación del backend</h2>
+<p>Se conservó el proyecto <code>tienda_online</code> de la Práctica 4 con su base de datos MySQL, sus productos y su endpoint de JWT. Se instalaron <code>django-cors-headers</code>, para que React pueda llamar a la API, y <code>zeep</code>, para consumir SOAP.</p>
+<figure class="medium">
+  <img src="ra2/01_pip_install.png" alt="Terminal con la instalación de django-cors-headers y zeep">
+  <figcaption><b>Figura 1.</b> Instalación de <code>django-cors-headers</code> y <code>zeep</code> en el entorno virtual.</figcaption>
+</figure>
+<p>Se crearon dos aplicaciones nuevas: <code>users</code> (registro y datos del usuario) y <code>countries</code> (consumo SOAP). En <code>settings.py</code> se activó CORS solo para el frontend y se amplió la vigencia del token:</p>
+<div class="file">tienda_online/settings.py</div>
+<pre>SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),
+}
+
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+]</pre>
+
+<h2>2. Creación del proyecto de React</h2>
+<p>El proyecto se creó con Vite (manual, pág. 13) en la carpeta <code>frontend</code>, a un lado del backend.</p>
+<figure class="medium">
+  <img src="ra2/02_vite_create.png" alt="Terminal con la creación del proyecto de Vite">
+  <figcaption><b>Figura 2.</b> Creación del proyecto con <code>npm create vite@latest</code>.</figcaption>
+</figure>
+<p>Después se instalaron las dependencias. Vite trae React 19, pero <code>semantic-ui-react</code> solo es compatible hasta React 18, por lo que se fijó esa versión. React Router se fijó en la versión 6 porque es la que pide la actividad.</p>
+<figure class="medium">
+  <img src="ra2/03_npm_install.png" alt="Terminal con las dependencias instaladas">
+  <figcaption><b>Figura 3.</b> Dependencias instaladas: React 18.3, React Router 6.30, Semantic UI React, Formik, Yup, React Toastify y Sass.</figcaption>
+</figure>
+
+<h2>3. Rutas y layouts</h2>
+<p>Se siguió la estructura del manual (págs. 15 a 20): una carpeta por responsabilidad, con un archivo <code>index.jsx</code> que reexporta los componentes de cada carpeta.</p>
+<figure class="medium">
+  <img src="ra2/04_estructura_frontend.png" alt="Lista de archivos de la carpeta src">
+  <figcaption><b>Figura 4.</b> Estructura final de <code>frontend/src</code>.</figcaption>
+</figure>
+<table>
+  <thead><tr><th>Ruta</th><th>Layout</th><th>Página</th><th>Acceso</th></tr></thead>
+  <tr><td><code>/</code> y <code>/home</code></td><td>ClientLayout</td><td>Home</td><td>Público</td></tr>
+  <tr><td><code>/login</code></td><td>CommonLayout</td><td>Login</td><td>Público</td></tr>
+  <tr><td><code>/register</code></td><td>CommonLayout</td><td>Register</td><td>Público</td></tr>
+  <tr><td><code>/dashboard</code></td><td>AdminLayout</td><td>Dashboard</td><td>Requiere sesión</td></tr>
+  <tr><td><code>*</code></td><td>CommonLayout</td><td>Error404</td><td>Público</td></tr>
+</table>
+<figure>
+  <img src="ra2/06_servidor_vite.png" alt="Terminal con el servidor de Vite corriendo">
+  <figcaption><b>Figura 5.</b> Servidor de desarrollo de Vite en el puerto 5173.</figcaption>
+</figure>
+<figure class="small">
+  <img src="ra2/10_home.png" alt="Página de inicio en el navegador">
+  <figcaption><b>Figura 6.</b> Página de inicio con accesos a login y registro.</figcaption>
+</figure>
+
+<h2>4. Página de registro</h2>
+<p>En el backend se creó <code>POST /api/auth/register/</code>, de acceso público. El serializador rechaza correos repetidos, aplica los validadores de contraseña de Django y guarda la contraseña hasheada con <code>create_user</code>.</p>
+<div class="file">users/views.py</div>
+<pre>class RegisterUserView(generics.CreateAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = RegisterUserSerializer</pre>
+<p>En React, el formulario valida con Formik y Yup: el usuario sin espacios, un correo válido, una contraseña con mayúscula, número y carácter especial, y la confirmación de la contraseña. Los errores del servidor, como un usuario repetido, se muestran con un toast.</p>
+<div class="pair">
+  <figure>
+    <img src="ra2/11_registro_validacion.png" alt="Formulario de registro con mensajes de validación">
+    <figcaption><b>Figura 7.</b> Validaciones al enviar el formulario vacío.</figcaption>
+  </figure>
+  <figure>
+    <img src="ra2/12_registro_lleno.png" alt="Formulario de registro lleno">
+    <figcaption><b>Figura 8.</b> Formulario lleno con la cuenta de prueba.</figcaption>
+  </figure>
+</div>
+<figure class="small">
+  <img src="ra2/13_registro_exitoso.png" alt="Login con aviso de registro exitoso">
+  <figcaption><b>Figura 9.</b> Registro exitoso: redirige al login y muestra una confirmación.</figcaption>
+</figure>
+
+<h2>5. Página de login</h2>
+<p>El formulario llama a <code>/api/token/</code>, el endpoint de JWT de la Práctica 4. Si las credenciales son correctas, escribe el token en la consola, lo guarda en <code>localStorage</code> y redirige al Dashboard. Si fallan, muestra un toast.</p>
+<div class="file">frontend/src/pages/common/Login.jsx</div>
+<pre>onSubmit: async (formValues) =&gt; {
+  try {
+    const { access } = await loginApi(formValues);
+    console.log("Token obtenido:", access);
+    await login(access);
+    navigate("/dashboard");
+  } catch (error) {
+    toast.error(error.message);
+  }
+},</pre>
+<div class="pair">
+  <figure>
+    <img src="ra2/15_login_error.png" alt="Login con mensaje de credenciales incorrectas">
+    <figcaption><b>Figura 10.</b> Credenciales incorrectas: aparece un toast de error.</figcaption>
+  </figure>
+  <figure>
+    <img src="ra2/16_login_formulario.png" alt="Login lleno con la consola abierta">
+    <figcaption><b>Figura 11.</b> Formulario lleno, con la consola abierta antes de enviar.</figcaption>
+  </figure>
+</div>
+<figure>
+  <img src="ra2/17_login_token_consola.png" alt="Dashboard y consola de Chrome mostrando el token">
+  <figcaption><span class="required">Captura solicitada</span><b>Figura 12.</b> Login funcionando: React ya redirigió al Dashboard y la consola muestra el token obtenido (<code>Login.jsx:20</code>). La consola se limpió antes de enviar el formulario para que el token se viera sin otros mensajes.</figcaption>
+</figure>
+
+<h2>6. Contexto de usuario</h2>
+<p><code>AuthContext</code> guarda los datos de la sesión y el hook <code>useAuth</code> los comparte con los componentes. Al abrir la aplicación se busca el token en <code>localStorage</code> y se piden los datos a <code>/api/auth/me/</code>. Si el token caducó o no es válido, se borra y aparece el login.</p>
+<div class="file">frontend/src/context/AuthContext.jsx</div>
+<pre>const login = async (token) =&gt; {
+  setToken(token);
+
+  try {
+    const me = await getMe(token);
+    setAuth({ token, me });
+  } catch (error) {
+    logout();
+    throw error;
+  }
+};</pre>
+<p><code>AdminLayout</code> protege el Dashboard: sin sesión muestra el login, aunque se escriba la dirección a mano.</p>
+<figure class="small">
+  <img src="ra2/14_ruta_protegida_sin_sesion.png" alt="Login mostrado al entrar a /dashboard sin sesión">
+  <figcaption><b>Figura 13.</b> Al entrar a <code>/dashboard</code> sin sesión se muestra el login.</figcaption>
+</figure>
+<figure>
+  <img src="ra2/18_dashboard.png" alt="Dashboard con el nombre del usuario y el widget de clima">
+  <figcaption><span class="required">Captura solicitada</span><b>Figura 14.</b> Dashboard protegido con el nombre del usuario logueado, <code>julian_ra2</code>, obtenido de <code>auth.me</code> mediante AuthContext.</figcaption>
+</figure>
+<figure class="small">
+  <img src="ra2/20_sesion_tras_recargar.png" alt="Dashboard después de recargar la página">
+  <figcaption><b>Figura 15.</b> Después de recargar la página, la sesión sigue activa.</figcaption>
+</figure>
+
+<h2>7. API de terceros</h2>
+<p>En el Dashboard se agregó un widget con el clima actual de la Ciudad de México. Usa <a href="https://open-meteo.com/">Open-Meteo</a>, que es gratuita y no necesita clave. La petición se hace con <code>fetch</code> desde el navegador. El botón <b>Actualizar</b> vuelve a consultar la API y, si falla, el widget muestra un mensaje de error.</p>
+<div class="file">frontend/src/api/weather.js</div>
+<pre>const params = new URLSearchParams({
+  latitude: CITY.latitude,
+  longitude: CITY.longitude,
+  current: "temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code",
+  timezone: "auto",
+});
+
+const response = await fetch(`${WEATHER_URL}?${params}`);</pre>
+<figure class="tiny">
+  <img src="ra2/19_widget_clima.png" alt="Widget de clima con temperatura, humedad y viento">
+  <figcaption><span class="required">Captura solicitada</span><b>Figura 16.</b> Widget con los datos externos de Open-Meteo cargados en el Dashboard.</figcaption>
+</figure>
+
+<h2>8. Web service propio</h2>
+<p><code>GET /api/auth/me/</code> devuelve los datos del usuario autenticado y exige un JWT válido. A diferencia del manual, la respuesta no incluye la contraseña hasheada.</p>
+<figure class="medium">
+  <img src="ra2/22_auth_me_terminal.png" alt="Terminal con respuestas 401 y 200 de /api/auth/me/">
+  <figcaption><b>Figura 17.</b> Sin token responde 401. Con el token de <code>/api/token/</code> devuelve los datos del usuario.</figcaption>
+</figure>
+
+<h2>9. Consumo SOAP con zeep</h2>
+<p>Se creó <code>GET /api/soap/countries/&lt;iso&gt;/</code>, protegido con JWT. Django consume la operación <code>FullCountryInfo</code> del servicio público <a href="http://webservices.oorsprong.org/websamples.countryinfo/CountryInfoService.wso?WSDL">CountryInfoService</a> y devuelve la respuesta en JSON. La lógica está en una capa de servicios, igual que en <code>products</code>.</p>
+<div class="file">countries/services.py</div>
+<pre>def obtener_pais(iso_code):
+    try:
+        respuesta = get_client().service.FullCountryInfo(sCountryISOCode=iso_code.upper())
+    except (ZeepError, RequestException) as exc:
+        raise SoapServiceError(str(exc)) from exc
+
+    pais = serialize_object(respuesta, dict)
+
+    if not pais['sISOCode']:
+        return None
+    ...</pre>
+<p>Al probar el servicio se encontraron dos detalles: solo reconoce el código ISO en mayúsculas, y un país inexistente no produce un error sino una respuesta con <code>sISOCode</code> vacío. Por eso el código convierte el ISO a mayúsculas y el endpoint responde 404 cuando el país no existe. Si el servicio no responde, devuelve 502.</p>
+<figure>
+  <img src="ra2/23_soap_terminal.png" alt="Terminal con la respuesta SOAP de México y un 404">
+  <figcaption><span class="required">Captura solicitada</span><b>Figura 18.</b> Respuesta del servicio SOAP consumido desde Django, y el caso de un país inexistente (404).</figcaption>
+</figure>
+<figure>
+  <img src="ra2/21_soap_navegador.png" alt="API navegable de Django REST Framework con la respuesta SOAP">
+  <figcaption><span class="required">Captura solicitada</span><b>Figura 19.</b> La misma respuesta en el navegador, con la API navegable de Django REST Framework y un JWT.</figcaption>
+</figure>
+<figure class="medium">
+  <img src="ra2/05_servidor_django.png" alt="Log del servidor de Django">
+  <figcaption><b>Figura 20.</b> Log del servidor de Django con las peticiones reales de la sesión: token, <code>auth/me</code> y SOAP. Las líneas <code>Broken pipe</code> ocurren cuando curl cierra la conexión y no son errores de la aplicación.</figcaption>
+</figure>
+
+<h2>10. Pruebas</h2>
+<p>Se agregaron 14 pruebas automáticas a las 8 que ya tenía el proyecto: 8 para <code>users</code> y 6 para <code>countries</code>. Las de SOAP simulan el servicio externo para no depender de la red. Las 22 pasan.</p>
+<figure class="medium">
+  <img src="ra2/24_pruebas_backend.png" alt="Terminal con 22 pruebas correctas">
+  <figcaption><b>Figura 21.</b> <code>python manage.py test</code>: 22 pruebas correctas. Los avisos W042 ya existían y no afectan el funcionamiento.</figcaption>
+</figure>
+<figure class="medium">
+  <img src="ra2/25_build_frontend.png" alt="Terminal con el build de producción correcto">
+  <figcaption><b>Figura 22.</b> <code>npm run build</code>: el frontend compila para producción.</figcaption>
+</figure>
+<p>También se hicieron estas comprobaciones:</p>
+<ul>
+  <li><b>Navegador:</b> 28 comprobaciones automáticas en Chrome con resultado correcto, entre ellas validaciones, credenciales incorrectas, usuario repetido, token inválido, falla de la API del clima, cierre de sesión y vista móvil.</li>
+  <li><b>Clon limpio:</b> se clonó el repositorio y se siguieron los pasos de instalación de dependencias del README. Las 22 pruebas pasaron y el frontend compiló.</li>
+</ul>
+
+<h2>11. Cambios respecto al manual</h2>
+<p>Se siguió el manual, pero algunas partes se adaptaron al backend de la Práctica 4 o se corrigieron porque tenían errores o no funcionaban con las versiones actuales.</p>
+<table>
+  <thead><tr><th style="width:36%">Cambio</th><th>Motivo</th></tr></thead>
+  <tr><td>Login con usuario en lugar de correo</td><td>El correo requiere el modelo de usuario de las págs. 7 y 8, que obliga a borrar la base de datos. La Práctica 4 usa el modelo de Django y su base ya tiene datos.</td></tr>
+  <tr><td>Rutas <code>/api/token/</code> y <code>/api/auth/...</code> sin <code>/v1/</code></td><td>Se respetó el endpoint de JWT que ya existía.</td></tr>
+  <tr><td>React 18 y React Router 6 fijados</td><td>Vite instala React 19, que no es compatible con <code>semantic-ui-react</code>.</td></tr>
+  <tr><td><code>cssMinify: false</code> en Vite</td><td>El build fallaba: el minificador de Vite 8 rechaza un selector de <code>semantic.min.css</code>, que ya viene minificado.</td></tr>
+  <tr><td><code>Error404</code> con export con nombre</td><td><code>export *</code> no reexporta el <code>export default</code> del manual, así que <code>{ Error404 }</code> no se podría importar.</td></tr>
+  <tr><td><code>await login(access)</code> antes de redirigir</td><td>Sin <code>await</code>, la redirección ocurre antes de tener los datos del usuario.</td></tr>
+  <tr><td>Manejo de token inválido en <code>getMeApi</code> y AuthContext</td><td>El manual no revisa la respuesta, así que con un token caducado mostraría un Dashboard sin datos.</td></tr>
+  <tr><td>Token con vigencia de 1 hora</td><td>Con los 5 minutos por defecto, la sesión caducaría muy pronto.</td></tr>
+  <tr><td><code>UserSerializer</code> sin el campo <code>password</code></td><td>En el manual, <code>/auth/me/</code> expone la contraseña hasheada.</td></tr>
+  <tr><td>Registro con <code>CreateAPIView</code></td><td>Es más simple que el <code>ModelViewSet</code> del manual, cuyo método <code>post</code> no se ejecuta y usa <code>request.user</code> en lugar de <code>request.data</code>.</td></tr>
+  <tr><td>CORS limitado a <code>localhost:5173</code></td><td>Es más seguro que permitir cualquier origen, y el frontend no necesita más.</td></tr>
+  <tr><td>Idioma de Django en español</td><td>Los errores del servidor aparecen en los toasts de la interfaz.</td></tr>
+  <tr><td><code>.gitignore</code>, <code>requirements.txt</code> y README</td><td>El proyecto no los tenía. Además, se dejaron de versionar los archivos <code>.pyc</code>.</td></tr>
+</table>
+
+<h2>12. Repositorio y resultado final</h2>
+<p>El código quedó en la rama <code>ra2-django-react</code> del repositorio. El <code>README.md</code> explica cómo crear la base de datos, instalar y ejecutar el backend y el frontend, y lista los endpoints.</p>
+<figure>
+  <img src="ra2/26_github_repo.png" alt="Repositorio en GitHub con las carpetas del proyecto">
+  <figcaption><b>Figura 23.</b> Repositorio en GitHub: <a href="https://github.com/JulinaUriarteCazares/django/tree/ra2-django-react">github.com/JulinaUriarteCazares/django/tree/ra2-django-react</a></figcaption>
+</figure>
+<p>La aplicación quedó completa: una persona se registra, inicia sesión con JWT, conserva su sesión al recargar y ve en el Dashboard sus datos y el clima. El backend expone además un endpoint protegido propio y otro que consume un servicio SOAP.</p>
+<h3>Consideraciones</h3>
+<ul>
+  <li>El token se escribe en la consola solo porque lo pide el entregable. Esa línea debe quitarse antes de usar el proyecto en producción.</li>
+  <li>En modo de desarrollo, <code>semantic-ui-react</code> muestra en la consola avisos de <code>findDOMNode</code> y <code>defaultProps</code>. Vienen de la librería y no afectan el funcionamiento.</li>
+  <li><code>npm audit</code> reporta 2 avisos moderados de React Router 6, y corregirlos requiere pasar a la versión 7. Se conservó la 6 porque la pide la actividad; los enlaces de la aplicación son fijos y no hay renderizado en servidor.</li>
+  <li>El widget de clima y el endpoint SOAP dependen de servicios externos. Si no responden, la aplicación muestra un error y sigue funcionando.</li>
+</ul>
+
+</body>
+</html>
